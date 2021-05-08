@@ -1,3 +1,21 @@
-Extends the base nginx engine with a new config file allowing to use history-mode's routing.
+A minimal static web server to serve Vue applications with history-mode
 
-1. Copy built Vue application to `/usr/share/nginx/html`
+Example:
+```dockerfile
+# build
+FROM node:12 AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+FROM n8maninger/vue-router
+
+COPY --from=build /app/dist /www
+```
