@@ -4,16 +4,13 @@ WORKDIR /app
 
 COPY . .
 
-RUN apk -U --no-cache add upx git gcc make \
-	&& make static \
-	&& upx ./dist/server
+RUN apk -U --no-cache add git gcc make
+RUN CGO_ENABLED=0 go build -o dist/ -a -trimpath -ldflags="-s -w" -tags='netgo timetzdata' ./cmd/routerd
 
 FROM scratch
 
-COPY --from=build /app/dist/server /
+COPY --from=build /app/dist/routerd /usr/local/bin
 
 EXPOSE 80/tcp
 
-VOLUME [ "/www" ]
-
-CMD ["/server", "/www"]
+CMD ["routerd", "/www"]

@@ -11,16 +11,6 @@ import (
 	"time"
 )
 
-func serveContent(w http.ResponseWriter, r *http.Request, name string, f *os.File) {
-	s, err := f.Stat()
-	if err != nil {
-		http.Error(w, "500 internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	http.ServeContent(w, r, name, s.ModTime(), f)
-}
-
 func main() {
 	base := os.Args[1]
 	indexPage, err := os.Open(filepath.Join(base, "index.html"))
@@ -42,35 +32,26 @@ func main() {
 
 	go func() {
 		errChan <- http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			start := time.Now()
-
 			if !strings.HasPrefix(r.URL.Path, "/") {
 				r.URL.Path = "/" + r.URL.Path
 			}
-
 			if r.URL.Path == "/" {
-				serveContent(w, r, "index.html", indexPage)
+				http.ServeContent(w, r, "index.html", time.Time{}, indexPage)
 				return
 			}
 
 			path := filepath.Clean(filepath.Join(base, r.URL.Path))
-			log.Println(path)
-
 			f, err := os.Open(path)
 			if err != nil {
-				serveContent(w, r, "index.html", indexPage)
+				http.ServeContent(w, r, "index.html", time.Time{}, indexPage)
 				return
 			}
 			defer f.Close()
-
-			serveContent(w, r, r.URL.Path, f)
-			log.Printf("%s (%s)", r.URL.Path, time.Since(start))
+			http.ServeContent(w, r, r.URL.Path, time.Time{}, f)
 		}))
 	}()
 
 	if err := <-errChan; err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("server error: %s", err)
 	}
-
-	log.Println("server shutdown")
 }
