@@ -9,7 +9,7 @@ RUN CGO_ENABLED=0 go build -o dist/ -a -trimpath -ldflags="-s -w" -tags='netgo t
 
 FROM scratch
 
-COPY --from=build /app/dist/routerd /usr/local/bin
+COPY --from=build /app/dist/routerd /usr/local/bin/routerd
 
 EXPOSE 80/tcp
 
